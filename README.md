@@ -10,7 +10,126 @@ The core design principle is **separating operational reads from analytical hist
 
 ---
 
-## Architecture Overview
+## Project Information
+
+### Tech Stack
+- **Runtime**: Node.js
+- **Framework**: NestJS 10.x
+- **Database**: PostgreSQL
+- **Language**: TypeScript
+
+#### Prerequisites
+- Node.js 18+
+- PostgreSQL 13+
+- npm or yarn
+
+#### Installation
+```bash
+npm install
+```
+
+#### Configuration
+Create a `.env` file in the project root:
+```env
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+POSTGRES_USERNAME=your_username
+POSTGRES_PASSWORD=your_password
+POSTGRES_DATABASE=fleet
+```
+
+#### Running the Application
+```bash
+# Development mode (with hot reload)
+npm run start:dev
+
+# Production mode
+npm run build
+npm start
+```
+
+The application will start on `http://localhost:3000`
+
+---
+
+## API Endpoints
+
+### Telemetry Ingestion
+**POST** `/v1/telemetry`
+
+Ingest vehicle telemetry data.
+
+Request body:
+```json
+{
+  "vehicleId": "VH001",
+  "soc": 85.5,
+  "kwhDeliveredDc": 12.3,
+  "batteryTemp": 25.0,
+  "timestamp": "2026-02-10T16:23:00Z"
+}
+```
+
+Response:
+```json
+{
+  "status": 200,
+  "message": "Telemetry ingested successfully"
+}
+```
+
+### Analytics - Vehicle Performance (24h)
+**GET** `/v1/analytics/performance/:vehicleId`
+
+Retrieve 24-hour performance metrics for a vehicle.
+
+Response:
+```json
+{
+  "total_dc": 145.2,
+  "total_ac": 152.3,
+  "efficiency": 0.9533,
+  "avg_battery_temp": 24.8
+}
+```
+
+---
+
+## Database Setup
+
+Run the database initialization script:
+```bash
+psql -U postgres -d fleet -f schema.sql
+```
+
+---
+
+## Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `POSTGRES_HOST` | Database host |
+| `POSTGRES_PORT` | Database port |
+| `POSTGRES_USERNAME` | Database user |
+| `POSTGRES_PASSWORD` | Database password |
+| `POSTGRES_DATABASE` | Database name |
+
+---
+
+## Development Commands
+
+```bash
+# Start development server with hot reload
+npm run start:dev
+
+# Build for production
+npm run build
+
+# Start production build
+npm start
+```
+
+---
 
 ### Data Streams
 - **Smart Meter (Grid Side)**: AC energy consumed (billing source)
@@ -79,9 +198,3 @@ WHERE v.vehicle_id = $1
   AND v.ts >= NOW() - INTERVAL '24 hours'
   AND m.ts >= NOW() - INTERVAL '24 hours';
 ```
-
-
-## EXPLAIN ANALYZE (Expected)
-- Index Scan on partitioned tables
-- No Seq Scan
-- Stable latency as data grows
